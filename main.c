@@ -5,10 +5,25 @@
 #include "grafo.h"
 #include "algoritmos.h"
 
-/* ============================
-   Medição de Memória (Linux)
-   ============================ */
+// Detectar plataforma
+#ifdef _WIN32
+    #include <windows.h>
+    #include <psapi.h>
+#endif
+
+/* 
+   Medição de Memória (Multiplataforma)
+*/
 long getPeakRSS() {
+#ifdef _WIN32
+    // Windows
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    if (GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc))) {
+        return (long)(pmc.PeakWorkingSetSize / 1024); // Converter para kB
+    }
+    return -1;
+#else
+    // Linux
     FILE* file = fopen("/proc/self/status", "r");
     if (!file) return -1;
 
@@ -24,6 +39,7 @@ long getPeakRSS() {
 
     fclose(file);
     return peak;  // Em kB
+#endif
 }
 
 int main(int argc, char* argv[]) {
@@ -52,17 +68,22 @@ int main(int argc, char* argv[]) {
     printf("Grafo carregado com sucesso!\n");
     printf("Vertices: %d | Arestas: %d\n", grafo->numVertices, grafo->numArestas);
 
-    // Verificar conectividade do grafo
-    int componentes = contarComponentesConexos(grafo);
-    printf("Componentes Conexos: %d\n", componentes);
-    
-    if (componentes > 1) {
-        printf("AVISO: Grafo desconexo detectado! Sera calculada a Floresta Geradora Minima.\n");
+    // Verificar conectividade do grafo (apenas para grafos pequenos/médios)
+    int componentes = -1;
+    if (grafo->numVertices < 100000) {
+        componentes = contarComponentesConexos(grafo);
+        printf("Componentes Conexos: %d\n", componentes);
+        
+        if (componentes > 1) {
+            printf("AVISO: Grafo desconexo detectado! Sera calculada a Floresta Geradora Minima.\n");
+        }
+    } else {
+        printf("Componentes Conexos: (nao verificado - grafo muito grande)\n");
     }
 
-    /* =============================
+    /* 
        KRUSKAL — Tempo e Memória
-       ============================= */
+    */
     printf("\nIniciando Kruskal...\n");
 
     long memAntesK = getPeakRSS();
@@ -80,9 +101,9 @@ int main(int argc, char* argv[]) {
     printf("--> Tempo (Kruskal): %.6f segundos\n", tempoKruskal);
     printf("--> Memória Usada (Kruskal): %ld kB\n", memKruskal);
 
-    /* =============================
+    /* 
        PRIM — Tempo e Memória
-       ============================= */
+    */
     printf("\nIniciando Prim...\n");
 
     long memAntesP = getPeakRSS();
@@ -100,9 +121,9 @@ int main(int argc, char* argv[]) {
     printf("--> Tempo (Prim): %.6f segundos\n", tempoPrim);
     printf("--> Memória Usada (Prim): %ld kB\n", memPrim);
 
-    /* =============================
+    /* 
         Validação básica
-       ============================= */
+    */
     printf("\n--- Validacao ---\n");
     double diferenca = custoKruskal - custoPrim;
     if (diferenca < 0) diferenca = -diferenca; // abs para double

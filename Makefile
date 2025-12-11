@@ -1,7 +1,15 @@
 # Variáveis de Compilação
 CC = gcc
 CFLAGS = -Wall -Wextra -g    # -Wall e -Wextra para avisos, -g para debug
-LDFLAGS = -lm                # Linker flags (necessário para math.h)
+
+# Detectar sistema operacional e ajustar flags
+ifeq ($(OS),Windows_NT)
+    LDFLAGS = -lm -lpsapi    # Windows precisa de psapi para GetProcessMemoryInfo
+    EXEC_EXT = .exe
+else
+    LDFLAGS = -lm            # Linux só precisa de math
+    EXEC_EXT =
+endif
 
 # Arquivos-fonte do projeto
 SRC = main.c grafo.c heap.c union_find.c algoritmos.c
@@ -29,7 +37,11 @@ $(EXEC): $(OBJ)
 
 # Limpa os arquivos temporários e o executável
 clean:
-	del *.o *.exe
+ifeq ($(OS),Windows_NT)
+	del *.o *.exe 2>nul || echo Arquivos limpos
+else
+	rm -f *.o $(EXEC)
+endif
 
 # Atalho para compilar e rodar com os arquivos de teste (ajustar nomes se necessário)
 run: all
