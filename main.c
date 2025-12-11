@@ -52,6 +52,14 @@ int main(int argc, char* argv[]) {
     printf("Grafo carregado com sucesso!\n");
     printf("Vertices: %d | Arestas: %d\n", grafo->numVertices, grafo->numArestas);
 
+    // Verificar conectividade do grafo
+    int componentes = contarComponentesConexos(grafo);
+    printf("Componentes Conexos: %d\n", componentes);
+    
+    if (componentes > 1) {
+        printf("AVISO: Grafo desconexo detectado! Sera calculada a Floresta Geradora Minima.\n");
+    }
+
     /* =============================
        KRUSKAL — Tempo e Memória
        ============================= */
@@ -96,11 +104,17 @@ int main(int argc, char* argv[]) {
         Validação básica
        ============================= */
     printf("\n--- Validacao ---\n");
-    if (abs(custoKruskal - custoPrim) < 0.001) {
+    double diferenca = custoKruskal - custoPrim;
+    if (diferenca < 0) diferenca = -diferenca; // abs para double
+    
+    if (diferenca < 0.001) {
         printf("SUCESSO: Ambos os algoritmos encontraram o mesmo custo minimo.\n");
+        if (componentes > 1) {
+            printf("(Floresta Geradora Minima com %d componentes)\n", componentes);
+        }
     } else {
         printf("ALERTA: Os custos diferem! Verifique a implementacao.\n");
-        printf("Diferenca: %.2f\n", custoKruskal - custoPrim);
+        printf("Diferenca: %.2f\n", diferenca);
     }
 
     liberarGrafo(grafo);

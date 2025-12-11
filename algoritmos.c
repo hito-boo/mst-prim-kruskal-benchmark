@@ -38,9 +38,6 @@ double executarKruskal(Grafo* grafo) {
 
     // Iterar pelas arestas ordenadas
     for (int i = 0; i < grafo->numArestas; i++) {
-        // Otimização: Se há V-1 arestas, a árvore está pronta
-        if (arestasNaArvore >= V - 1) break;
-
         Aresta proximaAresta = grafo->listaArestas[i];
 
         int x = encontrar(subconjuntos, proximaAresta.origem);
@@ -82,23 +79,29 @@ double executarPrim(Grafo* grafo) {
         minHeap->pos[v] = v;
     }
 
-    // Configura a Raiz (Vértice 0)
-    chave[0] = 0.0;
-    diminuirChave(minHeap, 0, chave[0]);
-    minHeap->tamanho = V; 
-
+    // Inicializa o heap
+    minHeap->tamanho = V;
     double pesoTotal = 0.0;
 
     printf("\n--- Algoritmo de Prim (Resultados) ---\n");
 
+    // Configura a primeira raiz (Vértice 0)
+    chave[0] = 0.0;
+    diminuirChave(minHeap, 0, chave[0]);
+
     while (!heapVazia(minHeap)) {
         // Extrai o vértice mais "barato" da fronteira
         NoHeap* minNo = extrairMinimo(minHeap);
-        int u = minNo->v; 
-
-        // Se não for a raiz inicial (que não tem pai), imprime a conexão
-        if (pai[u] != -1) {
-            // printf("Aresta: %d - %d \tPeso: %.2f\n", pai[u], u, minNo->chave);
+        int u = minNo->v;
+        
+        // Se o vértice ainda está desconectado (chave infinita), iniciar novo componente
+        if (minNo->chave == DBL_MAX) {
+            // Este vértice não foi alcançado - iniciar novo componente
+            chave[u] = 0.0;
+            pai[u] = -1;
+            // Não adiciona ao custo (é uma nova raiz)
+        } else if (pai[u] != -1) {
+            // Se não for raiz (tem pai), adiciona o custo da aresta
             pesoTotal += minNo->chave;
         }
 
@@ -124,4 +127,36 @@ double executarPrim(Grafo* grafo) {
     free(chave);
 
     return pesoTotal;
+}
+
+// Função auxiliar para DFS
+static void dfs(Grafo* grafo, int v, int* visitado) {
+    visitado[v] = 1;
+    
+    NoAdjacencia* adj = grafo->listaAdj[v];
+    while (adj != NULL) {
+        if (!visitado[adj->destino]) {
+            dfs(grafo, adj->destino, visitado);
+        }
+        adj = adj->proximo;
+    }
+}
+
+// Conta o número de componentes conexos no grafo
+int contarComponentesConexos(Grafo* grafo) {
+    if (!grafo || !grafo->listaAdj) return 0;
+    
+    int V = grafo->numVertices;
+    int* visitado = (int*) calloc(V, sizeof(int));
+    int componentes = 0;
+    
+    for (int v = 0; v < V; v++) {
+        if (!visitado[v]) {
+            dfs(grafo, v, visitado);
+            componentes++;
+        }
+    }
+    
+    free(visitado);
+    return componentes;
 }

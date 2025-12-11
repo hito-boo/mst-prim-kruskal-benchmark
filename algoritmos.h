@@ -11,4 +11,8 @@ double executarKruskal(Grafo* grafo);
 // Imprime as arestas da árvore selecionada e retorna o custo total
 double executarPrim(Grafo* grafo);
 
+// Verifica quantos componentes conexos o grafo possui
+// Retorna o número de componentes conexos
+int contarComponentesConexos(Grafo* grafo);
+
 #endif
