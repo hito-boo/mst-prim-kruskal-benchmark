@@ -68,17 +68,13 @@ int main(int argc, char* argv[]) {
     printf("Grafo carregado com sucesso!\n");
     printf("Vertices: %d | Arestas: %d\n", grafo->numVertices, grafo->numArestas);
 
-    // Verificar conectividade do grafo (apenas para grafos pequenos/médios)
-    int componentes = -1;
-    if (grafo->numVertices < 100000) {
-        componentes = contarComponentesConexos(grafo);
-        printf("Componentes Conexos: %d\n", componentes);
-        
-        if (componentes > 1) {
-            printf("AVISO: Grafo desconexo detectado! Sera calculada a Floresta Geradora Minima.\n");
-        }
-    } else {
-        printf("Componentes Conexos: (nao verificado - grafo muito grande)\n");
+    // Verificar conectividade do grafo
+    printf("Analisando componentes conexos...\n");
+    int componentes = contarComponentesConexos(grafo);
+    printf("Componentes Conexos: %d\n", componentes);
+    
+    if (componentes > 1) {
+        printf("AVISO: Grafo desconexo detectado! Sera calculada a Floresta Geradora Minima.\n");
     }
 
     /* 

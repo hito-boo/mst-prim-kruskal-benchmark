@@ -129,17 +129,32 @@ double executarPrim(Grafo* grafo) {
     return pesoTotal;
 }
 
-// Função auxiliar para DFS
-static void dfs(Grafo* grafo, int v, int* visitado) {
-    visitado[v] = 1;
+// DFS iterativa usando pilha explícita (evita stack overflow em grafos grandes)
+static void dfsIterativa(Grafo* grafo, int inicio, int* visitado) {
+    // Alocar pilha para DFS iterativa
+    int* pilha = (int*) malloc(grafo->numVertices * sizeof(int));
+    if (!pilha) return;
     
-    NoAdjacencia* adj = grafo->listaAdj[v];
-    while (adj != NULL) {
-        if (!visitado[adj->destino]) {
-            dfs(grafo, adj->destino, visitado);
+    int topo = 0;
+    pilha[topo++] = inicio;
+    
+    while (topo > 0) {
+        int v = pilha[--topo];
+        
+        if (visitado[v]) continue;
+        visitado[v] = 1;
+        
+        // Adiciona todos os vizinhos não visitados na pilha
+        NoAdjacencia* adj = grafo->listaAdj[v];
+        while (adj != NULL) {
+            if (!visitado[adj->destino]) {
+                pilha[topo++] = adj->destino;
+            }
+            adj = adj->proximo;
         }
-        adj = adj->proximo;
     }
+    
+    free(pilha);
 }
 
 // Conta o número de componentes conexos no grafo
@@ -148,11 +163,13 @@ int contarComponentesConexos(Grafo* grafo) {
     
     int V = grafo->numVertices;
     int* visitado = (int*) calloc(V, sizeof(int));
+    if (!visitado) return -1;
+    
     int componentes = 0;
     
     for (int v = 0; v < V; v++) {
         if (!visitado[v]) {
-            dfs(grafo, v, visitado);
+            dfsIterativa(grafo, v, visitado);
             componentes++;
         }
     }
